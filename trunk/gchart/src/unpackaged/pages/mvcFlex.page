@@ -1,0 +1,17 @@
+<apex:page controller="MVCFlexController">
+        <apex:flash src="{!$Resource.MVCFlex}" height="200" width="600" id="MVCFlex"
+ flashVars="requestData=getData" /> 
+        <apex:form>
+                <apex:actionFunction name="getData" action="{!getData}" rerender="loadList" />
+        </apex:form>
+        <apex:outputPanel id="loadList">
+                <script>var contacts = []; </script>
+                <apex:repeat value="{!contacts}" var="c">
+                        <script>contacts.push({ FirstName:"{!c.FirstName}", LastName:"{!c.LastName}", Email:"{!c.Email}" });</script>
+                </apex:repeat>
+                <script>if (contacts.length > 0) {
+                                flashObject.setDataProvider(contacts);
+                        }</script>
+        </apex:outputPanel>
+
+</apex:page>
