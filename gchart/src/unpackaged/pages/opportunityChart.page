@@ -1,0 +1,5 @@
+<apex:page standardController="Account" extensions="oppExt" >
+        <p>simple charts built from a google chart API</p>
+        <c:gchart type="line" size="500x190" debug="true" series="{!data}"  options="&chls=3,6,3" />
+       
+</apex:page>
