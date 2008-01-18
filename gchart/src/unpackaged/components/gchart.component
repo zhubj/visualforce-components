@@ -1,0 +1,30 @@
+<apex:component controller="gChart">
+        <!-- implements some of the Google Chart API, see 
+        http://code.google.com/apis/chart/ -->
+        <apex:attribute name="type" type="String"
+                description="Specify type of chart: line, pie, pie3"
+                assignTo="{!charttype}" required="true" />
+        <apex:attribute name="title"
+                description="This is the title of the chart." type="String" />
+        <apex:attribute name="size"
+                description="Set the image size format: ###x###" type="String"
+                assignTo="{!ChartSize}" />
+        <apex:attribute name="debug" description="debug DIV is turned on"
+                type="Boolean"/>
+        <apex:attribute name="options"
+                description="additional options to google chart api, preceed with &"
+                type="String" assignTo="{!options}" />
+
+        <apex:attribute name="series" description="series of data"
+                type="gChartSeries[]" assignTo="{!data}" />
+        <div>
+        <h1><apex:outputText value="{!title}" /></h1>
+        <p><img
+                src="http://chart.apis.google.com/chart?{!charttypeencode}&chd={!EncodedData}&{!ChartSize}&{!encodedLabels}{!IF(options!='',options,'')}" />
+        </p>
+       <apex:outputPanel layout="block" rendered="{!debug}">
+
+"http://chart.apis.google.com/chart" {!charttypeencode} chd={!EncodedData} {!ChartSize} {!encodedLabels} {!IF(options!='',options,'')} 
+        </apex:outputPanel>
+        </div>
+</apex:component>
