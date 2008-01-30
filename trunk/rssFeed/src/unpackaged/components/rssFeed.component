@@ -1,0 +1,37 @@
+<apex:component controller="rssFeedController">
+	<apex:attribute name="title"
+		description="Title to display at the top of the feed." type="String"
+		required="false" />
+	<apex:attribute name="feedURL"
+		description="Where to fetch the RSS feed." type="String"
+		required="true" assignTo="{!feedURL}" />
+	<apex:attribute name="entriesCount"
+		description="Number of feed entries to present." type="Integer"
+		required="false" assignTo="{!entriesCount}" />
+	<apex:attribute name="debug" description="debug DIV is turned on"
+		type="Boolean" />
+
+	<apex:outputPanel layout="block" rendered="{!debug}">
+		<p>feed: "{!feedURL}"<br />"{!entriesCount}" entries</p>
+		<apex:repeat value="{!feedContent}" var="entry" id="debugRepeat">
+			<apex:outputText value="{!entry.title}" id="theValue" />
+			<br />
+		</apex:repeat>
+	</apex:outputPanel>
+
+	<apex:outputPanel layout="block">
+		<apex:repeat value="{!feedContent}" var="entry" id="theRepeat">
+			<p>
+			<div id="adnblogtitle"><a href="{!entry.href}">{!entry.title}</a></div>
+
+			<div class="author">{!entry.author}</div>
+			<br />
+			<p>{!entry.summary}</p>
+			<i>{!entry.date}</i>
+			<br />
+
+			</p>
+			<hr />
+		</apex:repeat>
+	</apex:outputPanel>
+</apex:component>
