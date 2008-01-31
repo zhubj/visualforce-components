@@ -11,10 +11,17 @@ public class FeedEntry {
  public string created; 
  
  public string getDate() { 
- 	Pattern p = Pattern.compile('[TZ]'); // cleanup the feed provided datetime
- 	Matcher m = p.matcher(created);
- 	Datetime t = Datetime.valueof( m.replaceAll(' ') );	
- 	return '(' + t.format('MMMM d') + ')';  // format it
+ 	try { 
+	 	Pattern p = Pattern.compile('[TZ]'); // cleanup the feed provided datetime
+	 	Matcher m = p.matcher(created);
+	 	Datetime t = Datetime.valueof( m.replaceAll(' ') );	
+	 	return '(' + t.format('MMMM d') + ')';  // format it
+ 	} catch ( exception ex) {	 		
+	 	// also parse this type of date string 
+	 	// Wed, 30 Jan 2008 12:00:00 GMT
+	 	return created;
+ 	}
+ 	
  } 
  public string getSummary() { return summary; } 
  public string getTitle() { return title; } 

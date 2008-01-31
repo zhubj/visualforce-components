@@ -56,15 +56,18 @@ public class rssFeedController {
   			if ( lname == 'modified' ) 	mainFeed.modified = getValue(reader); 
   			// add more here
   			       	
-            if ('entry' == lname ) {
+            if (lname == 'entry' ) { // ATOM style
                 FeedEntry e = parseFeedEntry(reader); //parse out single entry from feed
-                system.debug(e);
-                entries.add(e);
-                
-                if (entries.size() >= getEntriesCount()) {
-                	return entries; // stop processing
-                }
-            }   
+                entries.add(e);                
+            } 
+            if (lname == 'item' ) {  // RSS 2.0 style
+            	system.debug('rss style');
+            	FeedEntry e = parseFeedItem(reader);
+            	entries.add(e);
+            }  
+            if (entries.size() >= getEntriesCount()) {
+            	return entries; // stop processing if we hit the count
+            }
          }
         reader.next();
       }
@@ -75,9 +78,34 @@ public class rssFeedController {
 	return entries;
    }
 
+	FeedEntry parseFeedItem(XmlStreamReader reader) {
+		FeedEntry e = new FeedEntry(); 
+     	while(reader.hasNext()) {
+	       	System.XmlTag tag = reader.getEventType();
+	        string lname = reader.getLocalName();
+	        String txt = ''; 
+	        try { txt = reader.getText(); } catch (exception ex) {}
+			
+			system.debug( lname + ' ' +tag + '  ' + txt);
+	        if (reader.getEventType() == XmlTag.END_ELEMENT) {
+	           if ( lname == 'item' ) break;
+	        }
+	     	if (reader.getEventType() == XmlTag.START_ELEMENT) {
+	
+			if (lname == 'title') e.title = getValue(reader);
+			if (lname == 'id') e.id = getValue(reader);
+			if (lname == 'description') e.summary = getValue(reader);
+			if (lname == 'link') e.origlink = getValue(reader);
+			if (lname == 'name') e.author = getValue(reader);
+			if (lname == 'pubDate') e.created = getValue(reader);
+	     	}
+     		reader.next();	
+     	}
+     	return e;
+	}
 
 	// Parse through the XML, deterimine the details of the feed entry
-   FeedEntry parseFeedEntry(XmlStreamReader reader) {
+    FeedEntry parseFeedEntry(XmlStreamReader reader) {
      FeedEntry e = new FeedEntry();
      //system.debug('parse entry');
      while(reader.hasNext()) {
@@ -201,4 +229,33 @@ public class rssFeedController {
        System.debug(f);
      }	
   	}
+	
+	// another rss type looks like this
+	string feed2test = '<?xml version="1.0" encoding="UTF-8"?>'+
+'<rss version="2.0"><channel><title>'+
+		'<![CDATA[Latest Listings]]>' +
+'</title><link><![CDATA[http://www.salesforce.com/appexchange/]]></link>' +
+'<description><![CDATA[Applications in the All Applications category]]></description><language>en-us</language>'+
+'<item><title><![CDATA[Absolute Automation: Email to Case]]></title>'+
+'<description><![CDATA[Emails going to your support email address automatically create cases in Salesforce.  Emails with an active case number in the subject are automatically logged to the correct case.]]></description>' +
+'<link><![CDATA[http://www.salesforce.com/appexchange/detail_overview.jsp?id=a0330000004Zs39AAC]]></link>'+
+'<category><![CDATA[Application Integration & Mashups]]></category>' +
+'<pubDate><![CDATA[Wed, 30 Jan 2008 12:00:00 GMT]]></pubDate></item></channel></rss>';
+                            
+     
+	public static testMethod void t2() {                
+	 rssFeedController rss = new rssFeedController();
+  	 rss.setFeedURL('');
+  	 string s = rss.getFeedURL();
+  	 rss.setEntriesCount(2);
+  	 Integer rr = rss.getEntriesCount();
+  	 rss.setBody( rss.testfeed ) ;
+     XmlStreamReader reader = new XMLstreamreader(rss.feed2test);
+     
+     FeedEntry[] feeds = rss.parseFeedEntries(reader);
+     System.debug(feeds.size());
+     for (FeedEntry f : feeds) {
+       System.debug(f);
+     }	     
+	}            
 }
