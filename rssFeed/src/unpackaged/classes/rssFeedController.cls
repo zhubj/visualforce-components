@@ -2,6 +2,10 @@
  * read from a feed, return a list of feed entry records
  */
 public class rssFeedController {
+	public Integer entriesCount = 5; // provide a default for this 
+	public integer getEntriesCount() { return entriesCount; }
+	public void setEntriesCount(integer i) {entriesCount = i;}
+	
 	public string feedURL;
 	public void setFeedURL(String u) { feedURL=u; }
 	public String getFeedURL() { return feedURL; }
@@ -16,13 +20,14 @@ public class rssFeedController {
 	    req.setEndpoint(feedURL);
 	    req.setMethod('GET');    
 	    // avoid getting more than we can process on the callout
-	    // max is 32000
+	    // max is 32000, more will throw an exception from the server
+	    // we could go back for a second range, but this will give ~10 normal blog entries
 	    req.setHeader('Range','bytes=0-31000'); 
 	    
 	    Http h = new Http();
 	    HttpResponse res = h.send(req);    	
 	    setBody ( res.getBody() );
-	    
+	    //system.debug( getBody() );
 	    XmlStreamReader reader = new XmlStreamReader(body);
 
 		// If you specify it as false, the parser may return text in multiple blocks.
@@ -53,36 +58,43 @@ public class rssFeedController {
   			       	
             if ('entry' == lname ) {
                 FeedEntry e = parseFeedEntry(reader); //parse out single entry from feed
+                system.debug(e);
                 entries.add(e);
-            }
+                
+                if (entries.size() >= getEntriesCount()) {
+                	return entries; // stop processing
+                }
+            }   
          }
         reader.next();
       }
      } catch (exception parseerror) { 
-     	system.debug ( parseerror); 
+     	system.debug ( 'parse error ' +parseerror); 
      }
-     system.debug(mainFeed);
-    return entries;
+    //system.debug(mainFeed);	system.debug(entries);
+	return entries;
    }
 
 
 	// Parse through the XML, deterimine the details of the feed entry
    FeedEntry parseFeedEntry(XmlStreamReader reader) {
      FeedEntry e = new FeedEntry();
-     
+     //system.debug('parse entry');
      while(reader.hasNext()) {
         System.XmlTag tag = reader.getEventType();
         string lname = reader.getLocalName();
         String txt = ''; 
         try { txt = reader.getText(); } catch (exception ex) {}
 		
-		//system.debug( lname + ' ' +tag + '  ' + txt);
+		system.debug( lname + ' ' +tag + '  ' + txt);
         if (reader.getEventType() == XmlTag.END_ELEMENT) {
            if ( lname == 'entry' ) break;
         }
         if (reader.getEventType() == XmlTag.START_ELEMENT && 
          	lname == 'content' ) { 	
-			e.content = getUntilEndOfElement(reader,'content');
+			// ignore content for now, this method is not working consistently
+			// we will display the summary 
+			// e.content = getUntilEndOfElement(reader,'content');
 			 
         } else if (reader.getEventType() == XmlTag.START_ELEMENT) {
 	
@@ -95,11 +107,14 @@ public class rssFeedController {
 		} 
         reader.next();
      }
-     system.debug(e);
+     //system.debug(e);
      return e;
    }
 
-	// special case, we want the raw inner HTML of this element
+	/* 
+	 * NB: unresolved bugs prevent this method from working properly, use summary instead.
+	 *
+   // special case, we want the raw inner HTML of this element
    string getUntilEndOfElement(XmlStreamReader reader,string endLocalName) {
    	 String value; 
    	 integer jj,ii = Integer.valueof(reader.getlocation().split(': ',3)[2]);
@@ -121,9 +136,10 @@ public class rssFeedController {
      //system.debug('content is '+value);
      return value ;
    }
+   */
 
    /* return the inner text, removing the start and end elements 
-   	* <f>bar</f> return bar
+   	* thus: <f>bar</f> return bar
    	*/
    	string getValue(XmlStreamReader reader) { String value; 
      while(reader.hasNext()) {
@@ -138,12 +154,7 @@ public class rssFeedController {
      //system.debug( 'getValue return '+value);
      return value ;
    	}   
-   
-   	// not used currently
-	public Integer entriesCount =4; // default this 
-	public integer getEntriesCount() { return entriesCount; }
-	public void setEntriesCount(integer i) {entriesCount = i;}
-	
+   	
    
 /* test method and data below here 
  * can't test using callout, must test with static string for feed
