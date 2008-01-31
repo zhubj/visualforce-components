@@ -12,15 +12,16 @@
 		type="Boolean" />
 
 	<apex:outputPanel layout="block" rendered="{!debug}">
-		<p>feed: "{!feedURL}"<br />"{!entriesCount}" entries</p>
-		<apex:repeat value="{!feedContent}" var="entry" id="debugRepeat">
-			<apex:outputText value="{!entry.title}" id="theValue" />
+		<br />rssFeed component debug output, feedURL: {!feedURL}<br />
+		entriesCount: {!entriesCount} entries<br />
+		<apex:repeat value="{!feedContent}" var="entry" >
+			<apex:outputText value="{!entry.title}"  />
 			<br />
 		</apex:repeat>
 	</apex:outputPanel>
 
-	<apex:outputPanel layout="block">
-		<apex:repeat value="{!feedContent}" var="entry" id="theRepeat">
+	<apex:outputPanel layout="block"><h3>{!title}</h3>
+		<apex:repeat value="{!feedContent}" var="entry" >
 			<p>
 			<div id="adnblogtitle"><a href="{!entry.href}">{!entry.title}</a></div>
 

@@ -3,6 +3,7 @@
 <h1>Congratulations</h1>
 This is your new RSS Feed custom component demo page
 
-<c:rssFeed  feedURL="http://feeds.feedburner.com/SforceBlog" />
+<c:rssFeed title="my blog title" 
+	debug="true" feedURL="http://feeds.feedburner.com/SforceBlog" entriesCount="4" />
  
 </apex:page>
