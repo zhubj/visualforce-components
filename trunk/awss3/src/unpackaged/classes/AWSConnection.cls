@@ -120,7 +120,7 @@ public class AWSConnection {
 				system.debug( 'body must not be null in PUT'); return; 
 			}
 			req.setBody(body); 
-			req.setCompressed(true); // otherwise we hit a limit of 3200
+			req.setCompressed(true); // otherwise we hit a limit of 32000
 		}
 		System.assert(this.BUCKET_NAME != null,'Missing Bucket name :setBucket(name)');
 		req.setEndpoint( this.serviceEndPoint + this.BUCKET_NAME +'/' + this.key);
