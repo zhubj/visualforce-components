@@ -101,7 +101,7 @@ public class XMLDom {
 /* 
  *  Element  class definition
  
-	This followin class implements a small portion of the wc3 xml dom model.  
+	This following class implements a small portion of the wc3 xml dom model.  
 	Generally useful for simple XML return objects. 
 	
 	for a properties and methods complete list see: 
