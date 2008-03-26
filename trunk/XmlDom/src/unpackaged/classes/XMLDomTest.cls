@@ -186,7 +186,30 @@ public class XMLDomTest {
 		for(XMLdom.Element ee:el) { 
 			system.debug( ee.path() );
 			ee.dump(); 
-			}
-	
+		}
+		
+		e2 = d.ownerDocument().getElementByTagName('name');
+		System.assertEquals('Mark Trang', e2.nodeValue);
+		
+		e2 = d.ownerDocument().getElementsByPath('/feed/title')[0];
+		e2.dump();
+		
+		/* 
+		 * experimental path based patern matching, sort of like xpath, 
+		 * but simpler, just matches a path() string with 
+		 * the pattern supplied
+		 */
+		// children of entry
+		el=	d.ownerDocument().getElementsByPath('/feed/entry/.*');
+		d.dumpList(el);
+		system.assertEquals( 14, el.size() );
+		
+		// just the entry node
+		el=	d.ownerDocument().getElementsByPath('/feed/entry');
+		system.assertEquals( 1, el.size() );
+		
+		// entry and children
+		el=	d.ownerDocument().getElementsByPath('/.*/entry.*');
+		system.assertEquals( 15, el.size() );
 	}	     
 }
