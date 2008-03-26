@@ -208,8 +208,21 @@ public class XMLDom {
 			c.dumpAll(pre+'   '); 
 		}
 	}
-	
-	// return a path describing our location in the dom 
+
+	/* 
+	 * experimental path based patern matching, sort of like xpath, 
+	 * but simpler, just matches a path() string with the pattern supplied
+	 */
+	 // * /bookstore/book/.*
+	 // /.*book/.*
+	 // /.*/book$
+	public List<Element> getElementsByPath(string path) {	
+		List<Element> ret = new List<Element>{};
+		// system.debug( path + ' ' + this.path());
+		if ( Pattern.matches(path, this.path()) ) ret.add(this);
+		for (Element c: this.childNodes) ret.addAll( c.getElementsByPath(path) );
+		return ret;
+	}	 
 	public string path() { 
 		Element t = this;
 		string ret = t.nodeName; 
