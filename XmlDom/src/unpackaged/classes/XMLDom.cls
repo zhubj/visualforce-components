@@ -92,12 +92,21 @@ public class XMLDom {
 	public List<Element> getElementsByTagName(string nam) {
 		return root.getElementsByTagName(nam); 
 	}
+
+	public Element 		 getElementByTagName(string nam) {
+		List<Element> r = root.getElementsByTagName(nam);
+		if (r.size() == 0) return null; 
+		return r[0];
+	}
+
+	// utility dom functions
 	public Element ownerDocument() { return root; }
-	
+
 	// everything in the dom is found as childNodes under this root element
-	public Element root = new Element('#document'); 
+	public Element root = new Element('#document');
 	public integer debug =0;
 
+	
 /* 
  *  Element  class definition
  
@@ -199,16 +208,17 @@ public class XMLDom {
 			c.dumpAll(pre+'   '); 
 		}
 	}
-	/* not used
-	public string fullpath() { 
+	
+	// return a path describing our location in the dom 
+	public string path() { 
 		Element t = this;
 		string ret = t.nodeName; 
-		while (t.parentNode!=null ) { 
+		while (t.parentNode != null && t.parentNode.nodeName != '#document') { 
 			t = t.parentNode;
 			ret = t.nodeName + '/'+ret;
 		}
 		return '/'+ret;
-	}*/
+	}
 	
 	// utility methods
 	public Element firstChild() { 

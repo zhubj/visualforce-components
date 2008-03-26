@@ -144,7 +144,49 @@ public class XMLDomTest {
 		a = new XMLdom.Element(); 
 		system.assertEquals( a.firstChild(), null, ' must be null' );
 		
-		system.assertEquals( a.getElementByTagName('bad'), null);				
+		system.assertEquals( a.getElementByTagName('bad'), null);		
 	 }
+
+	public static testmethod void testRSS() { 
+		
+	   	String feed = '<?xml version="1.0" encoding="UTF-8"?>'+
+			'<feed xmlns="http://purl.org/atom/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:feedburner="http://rssnamespace.org/feedburner/ext/1.0" version="0.3">'+
+			'<title>Force.com Blog</title>' +
+			'<link rel="alternate" type="text/html" href="http://blog.sforce.com/sforce/" />' +
+			'<id>tag:typepad.com,2003:weblog-125619</id>' +
+			'<link rel="service.post" type="application/x.atom+xml" href="http://www.typepad.com/t/atom/weblog/blog_id=125619" title="Force.com Blog" />' +
+			'<modified>2008-01-23T20:27:30Z</modified>' +
+			'<tagline></tagline>' +
+			'<generator url="http://www.typepad.com/">TypePad</generator>' +
+			'<info type="application/xhtml+xml">' +
+			'<div xmlns="http://www.w3.org/1999/xhtml">This is an Atom formatted XML site feed. It is intended to be viewed in a Newsreader or syndicated to another site. Please visit <a href="http://blog.sforce.com/sforce/">Force.com Blog</a> for more info.</div>' +
+			'</info><entry>' +
+		    '<title>Tour de Force Global Kickoff - it\'s a wrap!</title>' +
+		    '<link rel="alternate" type="text/html" href="http://feeds.feedburner.com/~r/SforceBlog/~3/221839184/tour-de-force-g.html" />' +
+		    '<link rel="service.edit" type="application/x.atom+xml" href="http://www.typepad.com/t/atom/weblog/blog_id=125619/entry_id=44564390" title="Tour de Force Global Kickoff - it\'s a wrap!" />' +
+		    '<id>tag:typepad.com,2003:post-44564390</id>' +
+		    '<issued>2008-01-23T12:27:30-08:00</issued>' +
+		    '<modified>2008-01-23T20:27:30Z</modified>' +
+		    '<created>2008-01-23T20:27:30Z</created>' +
+		    '<summary>Thank you to everyone that joined us last Thursday in San Francisco as we kicked off Tour de Force - we\'re delighted that you were able help us launch the Tour de Force roadshow to unleash the Force.com platform around...</summary>' +
+		    '<author><name>Mark Trang</name></author>' +
+		    '<content type="application/xhtml+xml" xml:lang="en-US" xml:base="http://blog.sforce.com/sforce/"><div xmlns="http://www.w3.org/1999/xhtml">'+
+	      	'<p>Thank you to everyone that joined us last Thursday in San Francisco as we kicked off Tour de Force - </p></div></content>'+
+	        '<feedburner:origLink>http://blog.sforce.com/sforce/2008/01/tour-de-force-g.html</feedburner:origLink></entry></feed>';
+	   	xmldom d = new xmldom(feed);  
+		list<xmldom.element> tmp ;  
+		d.dumpAll();
+		XMLdom.Element e2 = d.ownerDocument().getElementByTagName('entry');
+		e2.dumpAll();	
+		system.assertEquals('entry', e2.nodeName ); 		
+		system.assertEquals( e2.getValue('title'), 'Tour de Force Global Kickoff - it\'s a wrap!');
+		
+		
+		XMLdom.Element[] el = d.ownerDocument().getElementsByTagName('link');
+		for(XMLdom.Element ee:el) { 
+			system.debug( ee.path() );
+			ee.dump(); 
+			}
 	
+	}	     
 }
