@@ -32,7 +32,7 @@ public class XMLDomTest {
 		d = new xmldom('<book  author="Manoj" >My Book</book>');
 		d.dumpAll(); 
 	 	XMLdom.Element e = d.getElementsByTagName('book')[0];
-		system.debug( 'Author is ' + e.getAttribute('author') ); 
+		system.assert( e.getAttribute('author') =='Manoj' ); 
 		
 		d = new xmldom(); d.parseFromString('<book  author="Manoj" >My Book</book>');
 		d.dumpAll(); 
