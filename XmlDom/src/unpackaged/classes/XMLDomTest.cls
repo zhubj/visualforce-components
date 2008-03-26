@@ -115,7 +115,8 @@ public class XMLDomTest {
 		
 		system.assert( d.getElementsByTagName('Grantee')[0].hasAttributes() );
 		
-			
+		system.assert(d.getElementByTagName('AccessControlPolicy').nodeName != null);	
+		system.assert(d.getElementByTagName('bad') == null);	
 		
 	}
 	
