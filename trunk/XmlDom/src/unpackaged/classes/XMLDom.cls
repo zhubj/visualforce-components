@@ -89,7 +89,7 @@ public class XMLDom {
 	}	
 	
 	// access nodes in the tree using these getters
-	public List<xmldom.Element> getElementsByTagName(string nam) {
+	public List<Element> getElementsByTagName(string nam) {
 		return root.getElementsByTagName(nam); 
 	}
 	public Element ownerDocument() { return root; }
@@ -178,7 +178,6 @@ public class XMLDom {
 	// like above, but just returns the first one that matches	
 	public Element 		 getElementByTagName(string nam) {
 		List<Element> r = 	getElementsByTagName(nam);
-		if (r == null ) return null;
 		if (r.size() == 0) return null; 
 		return r[0];
 	}

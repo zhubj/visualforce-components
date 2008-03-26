@@ -119,106 +119,12 @@ public class XMLDomTest {
 		
 	}
 	
-	public static testmethod void test2() { 
-	 	 string testNotification = '<?xml version="1.0" encoding="UTF-8"?>' +
-'<notification-data-response xmlns="http://checkout.google.com/schema/2" serial-number="9d0e62c6-afc8-44ce-a985-180b37356059">' + 
-'  <notifications>' + 
-'   <new-order-notification  serial-number="377345681025137-00001-7">' + 
-      '<timestamp>2008-03-04T20:56:40.606Z</timestamp>' + 
-      '<buyer-id>756525894341880</buyer-id>' + 
-      '<shopping-cart>' + 
-        '<items>' + 
-          '<item>' + 
-          '  <merchant-item-id>33</merchant-item-id> '+
-            '<item-name>Donate to our Cause</item-name>' + 
-            '<item-description>Thank you for your contribution!</item-description>' + 
-            '<unit-price currency="USD">55.0</unit-price>' + 
-            '<quantity>1</quantity>' + 
-          '</item>' + 
-        '</items>' + 
-      '</shopping-cart>' + 
-      '<order-adjustment>' + 
-        '<merchant-codes />' + 
-        '<total-tax currency="USD">0.0</total-tax>' + 
-       '<adjustment-total currency="USD">0.0</adjustment-total>' + 
-     '</order-adjustment>' + 
-     '<google-order-number>377345681025137</google-order-number>' + 
-     '<buyer-shipping-address>' + 
-       '<email>sfdctestbuyer2@gmail.com</email>' + 
-       '<company-name></company-name>' + 
-       '<contact-name>Bob Cardholder</contact-name>' + 
-       '<phone></phone>' + 
-       '<fax></fax>' + 
-       '<address1>1234 MainShipping St.</address1>' + 
-       '<address2>apt 2</address2>' + 
-       '<country-code>US</country-code>' + 
-       '<city>Moline</city>' + 
-       '<region>TX</region>' + 
-       '<postal-code>61265</postal-code>' + 
-     '</buyer-shipping-address>' + 
-     '<buyer-billing-address>' + 
-       '<email>sfdctestbuyer2@gmail.com</email>' + 
-       '<company-name></company-name>' + 
-       '<contact-name>Bob Cardholder</contact-name>' + 
-       '<phone></phone>' + 
-       '<fax></fax>' + 
-       '<address1>1234 MainBilling St.</address1>' + 
-       '<address2>apt 1</address2>' + 
-       '<country-code>US</country-code>' + 
-       '<city>Moline</city>' + 
-       '<region>IL</region>' + 
-       '<postal-code>61266</postal-code>' + 
-     '</buyer-billing-address>' + 
-     '<buyer-marketing-preferences>' + 
-       '<email-allowed>false</email-allowed>' + 
-     '</buyer-marketing-preferences>' + 
-     '<order-total currency="USD">55.0</order-total>' + 
-     '<fulfillment-order-state>NEW</fulfillment-order-state>' + 
-     '<financial-order-state>REVIEWING</financial-order-state>' + 
-   ' </new-order-notification>' +
-
-   ' <order-state-change-notification serial-number="377345681025137-00010-1">' +
-     '<timestamp>2008-03-04T20:57:42.530Z</timestamp>' +
-     '<google-order-number>377345681025137</google-order-number>' +
-     '<new-fulfillment-order-state>PROCESSING</new-fulfillment-order-state>' +
-     '<new-financial-order-state>CHARGED</new-financial-order-state>' +
-     '<previous-fulfillment-order-state>PROCESSING</previous-fulfillment-order-state>' +
-     '<previous-financial-order-state>CHARGING</previous-financial-order-state>' +
-   ' </order-state-change-notification>' +
-   ' <order-state-change-notification serial-number="377345681025137-00011-1">' +
-     '<timestamp>2008-03-04T20:57:42.561Z</timestamp>' +
-     '<google-order-number>377345681025137</google-order-number>' +
-     '<new-fulfillment-order-state>DELIVERED</new-fulfillment-order-state>' +
-     '<new-financial-order-state>CHARGING</new-financial-order-state>' +
-     '<previous-fulfillment-order-state>PROCESSING</previous-fulfillment-order-state>' +
-     '<previous-financial-order-state>CHARGING</previous-financial-order-state>' +
-   '</order-state-change-notification> ' +
- '</notifications></notification-data-response>' ;
-		xmldom d;
-		list<xmldom.element> tmp ; 
-	 	d = new xmldom(testNotification);  
-	
-		// select nodes with a path type specification
-		tmp =  d.root.getElementsByTagName('notifications'); 
-		system.assertEquals( 1, tmp.size() ); 
-		d.dumpList( tmp );
-	
-		tmp =  d.root.getElementsByTagName('timestamp'); 
-		system.assertEquals( 3, tmp.size() ); 
-		d.dumpList( tmp );
-	  
-		tmp =  d.root.getElementsByTagName('new-fulfillment-order-state'); 
-		system.assertEquals( 2, tmp.size() ); 
-		d.dumpList( tmp );
-	
-	}
-	
 
 	public static testmethod void test3() { 
-	 	 string testNotification = '<?xml version="1.0" encoding="UTF-8"?>' +
+	 	 string testNotification = 
+	 	 '<?xml version="1.0" encoding="UTF-8"?>' +
 			'<bookstore><book><title lang="eng">Harry Potter</title><price>29.99</price>' +
-			'</book><book><title lang="eng">Learning XML</title>' +
-			'<price>39.95</price></book></bookstore>';
+			'</book><book><title lang="eng">Learning XML</title><price>39.95</price></book></bookstore>';
 
  		xmldom d;
 	 	d = new xmldom(testNotification);  
@@ -234,7 +140,11 @@ public class XMLDomTest {
 		system.assert( a.isSameNode( c ) );
 		XMLdom.Element b = a.cloneNode();
 		system.assert( ! a.isSameNode(f) ); 
-						
+		
+		a = new XMLdom.Element(); 
+		system.assertEquals( a.firstChild(), null, ' must be null' );
+		
+		system.assertEquals( a.getElementByTagName('bad'), null);				
 	 }
 	
 }
