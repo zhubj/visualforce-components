@@ -104,7 +104,11 @@ public class XMLDomTest {
 	 '<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>owner_id</ID><DisplayName>vnehess</DisplayName></Owner>'+
 	 '<AccessControlList><Grant><Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser" foo="bar" ><ID>owner_id</ID>'+
 	 '<DisplayName>vnehess</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList></AccessControlPolicy>';
+
+		system.debug('getScriptStatements() ' +Limits.getScriptStatements()); 	  		
 		d = new xmldom(testACLResponse); 
+		system.debug('getScriptStatements() ' +Limits.getScriptStatements()); 	  		
+
 		d.dumpAll(); 
 		system.debug ('has child '+ d.root.hasChildNodes()) ; 
 		
@@ -178,6 +182,7 @@ public class XMLDomTest {
 		list<xmldom.element> tmp ;  
 		d.dumpAll();
 		XMLdom.Element e2 = d.ownerDocument().getElementByTagName('entry');
+
 		e2.dumpAll();	
 		system.assertEquals('entry', e2.nodeName ); 		
 		system.assertEquals( e2.getValue('title'), 'Tour de Force Global Kickoff - it\'s a wrap!');
@@ -188,8 +193,11 @@ public class XMLDomTest {
 			system.debug( ee.path() );
 			ee.dump(); 
 		}
+		system.debug( Limits.getScriptStatements() );
 		
 		e2 = d.ownerDocument().getElementByTagName('name');
+		system.debug( Limits.getScriptStatements() );
+		
 		System.assertEquals('Mark Trang', e2.nodeValue);
 		
 		e2 = d.ownerDocument().getElementsByPath('/feed/title')[0];
@@ -209,8 +217,16 @@ public class XMLDomTest {
 		el=	d.ownerDocument().getElementsByPath('/feed/entry');
 		system.assertEquals( 1, el.size() );
 		
-		// entry and children
+				// entry and children
+		system.debug( Limits.getScriptStatements() );
+  			//delta =  Limits.getScriptStatements();
 		el=	d.ownerDocument().getElementsByPath('/.*/entry.*');
+	
+		system.debug( Limits.getScriptStatements() );
+		el[0].getValue('title');
+		system.debug( Limits.getScriptStatements() );
+		
 		system.assertEquals( 15, el.size() );
-	}	     
+	}	
+
 }
