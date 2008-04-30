@@ -1,0 +1,96 @@
+<apex:component>
+<apex:attribute name="data" description="Data to display in the Image Gallery" type="Property_Media__c[]" required="true" />
+<style>
+div.sq {
+  border: 1px solid black;
+  width: 12px; height: 12px;
+  cursor: pointer;
+}
+div.sq:hover {
+  background-color: #296DC1;
+}
+</style>
+<script language="javascript">
+function gel(id) {
+  return document.getElementById(id);
+}
+
+function showImage(id) {
+  var url = gel("url_" + id).innerHTML;
+  gel("image").src = url;
+  gel("imageLink").href = "javascript:zoom2('" + url + "');";
+}
+function zoom(url) {
+  openPopupFocus(url, "_blank", 300, 400, "width=300,height=400,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=no,dependant=yes", false, false, false);
+}
+
+function zoom2(url) {
+  openPopupFocus(url, "_blank", 600, 500, "width=600,height=500,resizable=yes,toolbar=yes,status=yes,scrollbars=yes,menubar=yes,directories=no,location=no,dependant=yes", false, false, false);
+}
+
+function openPopup(url, name, pWidth, pHeight, features, snapToLastMousePosition) {
+    openPopupFocus (url, name, pWidth, pHeight, features, snapToLastMousePosition, true);
+}
+function openPopupFocus(url, name, pWidth, pHeight, features, snapToLastMousePosition, closeOnLoseFocus, closeOnParentUnload) {
+    closePopup();
+
+    if (snapToLastMousePosition) {
+        if (lastMouseX - pWidth < 0) {
+            lastMouseX = pWidth;
+        }
+        if (lastMouseY + pHeight > screen.height) {
+            lastMouseY -= (lastMouseY + pHeight + 50) - screen.height;
+        }
+        lastMouseX -= pWidth;
+        lastMouseY += 10;
+        features += ",screenX=" + lastMouseX + ",left=" + lastMouseX + ",screenY=" + lastMouseY + ",top=" + lastMouseY;
+    }
+
+    if (closeOnLoseFocus) {
+        curPopupWindow = window.open(url, name, features, false);
+        curPopupWindow.focus ();
+    } else {
+        // assign the open window to a dummy var so when closePopup() is called it won't be assigned to curPopupWindow
+        win = window.open(url, name, features, false);
+        win.focus ();
+    }
+
+    if (closeOnParentUnload) {
+        closeOnParentUnloadWindow = win;
+    }
+}
+
+function closePopup() {
+    if (curPopupWindow != null) {
+
+        try {
+            curPopupWindow.close();
+        } catch(ex) {
+            // This Exception code is to deal with IE issues checking
+            // The window's closed property
+        }
+        curPopupWindow = null;
+    }
+}
+</script>
+
+<table cellpadding="2" cellspacing="0" border="0"><tr>
+<apex:repeat value="{!data}" first="0" var="pm" rows="12">
+<td><div class="sq" onmouseover="showImage('{!pm.Id}');" onclick="showImage('{!pm.Id}');"></div></td>
+</apex:repeat>
+</tr><tr>
+<apex:repeat value="{!data}" first="12" var="pm" rows="12">
+<td><div class="sq" onmouseover="showImage('{!pm.Id}');" onclick="showImage('{!pm.Id}');"></div></td>
+</apex:repeat>
+</tr>
+</table>
+<p />
+<a id="imageLink" href=""><img id="image" style="width: 330px; height: 220px;" src="" /></a>
+
+<div style="display: none;">
+<apex:repeat value="{!data}" var="pm">
+<div id="url_{!pm.Id}">{!pm.Url__c}</div>
+</apex:repeat>
+</div>
+
+</apex:component>

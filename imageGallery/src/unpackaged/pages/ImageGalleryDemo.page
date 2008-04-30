@@ -1,0 +1,5 @@
+<apex:page controller="ImageGalleryDemoController">
+
+<c:ImageGallery data="{!propertyMedia}" />
+
+</apex:page>
