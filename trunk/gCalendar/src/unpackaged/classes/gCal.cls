@@ -64,24 +64,6 @@ public class gCal {
 	public string getCalSession() { 
 		return this.SessionToken.AuthSubSessionToken__c;
 	}
-	public static testMethod void test3() { 
-  		string te = ' Token=CO3G_f-CGBDIlaye-P____8B\n';
-		gcal  g = new gcal();
-		g.updateSessionToken( te);
-		system.assert( g.getCalSession() == 'CO3G_f-CGBDIlaye-P____8B',' token not stored ');
-		g.updateSessionToken('');
-		system.debug( g.getCalSession() );
-	}
-	public static testMethod void testConstructor() { 
-		googSession__c gs = new googSession__c(); 
-		insert gs;
-		gcal  g = new gcal(gs.id);
-		system.debug(g);
-		system.assert(g.SessionToken != null);		
-		gcal  gg = new gcal('');
-		gg.init();
-		system.assert(gg.SessionToken != null);	
-	}	
 	
 	/* updateSessionToken()
 	 * make the update to save this 
@@ -105,26 +87,13 @@ public class gCal {
  			system.debug('going to update '+ SessionToken);
  			update 	SessionToken;
  		} catch(Exception e) { 
- 			system.debug ('EXCP '+e); 
+ 			//system.debug ('EXCP '+e); 
  		}
  		
 		system.debug('updated '+ SessionToken);
 	}
 	
 
-	
-	public static testMethod void test1() { 
-  		gcal  g = new gcal(); 
-  		Test.setCurrentPageReference(new PageReference('gsession'));
-  		// Add parameters to page URL
-		System.currentPageReference().getParameters().put('token', 'yyyy');
-		g.SessionToken.AuthSubSessionToken__c =null;
-  		system.debug( g.getAuthSubSessionToken() );
-  		calendars[] le =g.getowncalendars();
-  		for ( calendars e: le) { 
-	  		system.debug(e.getTitle());
-  		} 
-	}
 	
 	private string defaultFeed = 'https://www.google.com/calendar/feeds/default';
 	public string getDefaultFeed() { return defaultFeed; }
@@ -137,45 +106,24 @@ public class gCal {
 	} 
 	public list<calendars> getowncalendars() { 
 		makeRequest( defaultFeed+ '/owncalendars/full');
-		dom = new xmldom( getResponse().getBody() );
+		return getCalendarsList( getResponse().getBody() );
+	}
+	
+	// take a response string, return a list of calendars marked by entries
+	public list<calendars> getCalendarsList( string body ) { 
+		dom = new xmldom( body );
 		dom.dumpAll(); 
 		list<calendars> ret = new list<calendars>{};
-		for(xmldom.element e: dom.getElementsByTagName('entry') ) 
-		{
+		for(xmldom.element e: dom.getElementsByTagName('entry') ) {
 			ret.add( new calendars( e) );
-		} return ret;
+		}
+		return ret;
 	}
 	
 	public static testMethod void test2() { 
   		gcal  g = new gcal(); 
   		list<event> le = g.getEvents();
-  		for ( event e: le) { 
-	  		system.debug(e.getTitle());
-	  		e.getTitle(); 
-	  		e.getId(); 
-	  		e.getStartTime(); 
-	  			
-  		}
-  		calendars[] cle =g.getowncalendars();
-  		for ( calendars e: cle) { 
-	  		system.debug(e.getTitle());
-  		} 
 	}
-	public static testMethod void test2b() { 
-  		gcal  g = new gcal(); 
-  		system.event ee = new System.Event(
-			subject = 'Tennis with Beth',
-			description = 'Meet for a quick lesson.',
-			ActivityDateTime = system.now(),
-			DurationInMinutes = 60
-			) ;
-		xmldom.element x = g.createEventAtomElement( ee ) ;
-		x.dumpAll();
-		event mee = new gcal.event( x );	
-		mee.getTitle(); 
-		mee.getId(); 
-		mee.getStartTime();
-	}	
 	public class event  { 
 		xmldom.element e; 
 		event( xmldom.element dd) { e = dd; }
@@ -185,14 +133,14 @@ public class gCal {
 	}
 	
 	public List<event> getEvents() { 
-		// past week ?
-		
 		// use a date range or hit the response size too large...
 		makeRequest(	defaultFeed+'/private/full?start-min=2008-01-16T00:00:00&start-max=2008-05-24T23:59:59' );
+		return getEvents(getResponse().getBody()); 
+	}
+	
+	public List<event> getEvents(string body) { 
 		event [] ret = new event []{};
-
-		dom = new xmldom( getResponse().getBody() );
-		
+		dom = new xmldom( body );
 		for( xmldom.element e: dom.getElementsByTagName('entry') ) { 
 			e.dumpAll();
 			system.debug( e.getValue('title') );
@@ -202,22 +150,28 @@ public class gCal {
 		}		
 		return ret; 
 	}
+	public static testMethod void test2c() { 
+  		gcal  g = new gcal(); 
+  		system.event ee = new System.Event(
+			subject = 'Tennis with Beth',
+			description = 'Meet for a quick lesson.',
+			ActivityDateTime = system.now(),
+			DurationInMinutes = 60
+			) ;
+		xmldom.element x = g.createEventAtomElement( ee ) ;
+		g.getEvents(g.tstString); 
+	}		
 
-
-	public List<event> getCalendars() { 
-		makeRequest(	defaultFeed+'/allcalendars/full');
-		event [] ret = new event []{};
-		dom = new xmldom( getResponse().getBody() );
-		for( xmldom.element e: dom.getElementsByTagName('entry') ) { 
-		//	e.dumpAll();
-		//	system.debug( e.getValue('title') );
-			//system.debug( e.getValue('title') + ' ' + e.getElementByTagName('when').getAttribute('startTime') );	
-			ret.add( new event(e) );
-		}		
-		return ret; 
-	}
 	
-	
+	public final string tstString = '<entry xmlns=\'http://www.w3.org/2005/Atom\' xmlns:gd=\'http://schemas.google.com/g/2005\'>'+
+		'<category scheme=\'http://schemas.google.com/g/2005#kind\' term=\'http://schemas.google.com/g/2005#event\'></category>'+
+		  '<title type=\'text\'>Tennis with Beth</title>'+
+		  '<content type=\'text\'>Meet for a quick lesson.</content>'+
+		  '<gd:transparency value=\'http://schemas.google.com/g/2005#event.opaque\'>  </gd:transparency>'+
+		  '<gd:eventStatus    value=\'http://schemas.google.com/g/2005#event.confirmed\'>  </gd:eventStatus>'+
+		  '<gd:where valueString=\'Rolling Lawn Courts\'></gd:where>'+
+		  '<gd:when startTime=\'2006-04-17T15:00:00.000Z\' '+
+		    'endTime=\'2006-04-17T17:00:00.000Z\'></gd:when></entry>';
 	
 	/*
 		build this
@@ -293,72 +247,6 @@ public class gCal {
 		g.makeRequestMethod('POST',g.getDefaultFeed()+'/private/full', b);
 	}
 	
-	/*
-	public static xmldom testCalCreateFromEvent(string id , system.Event ev) { 
-		gcal  g = new gcal(id);
-		string b  = g.createEventAtom( ev );
-		system.debug (b);
-		g.makeRequestMethod('POST',g.getDefaultFeed()+'/private/full', b);
-		// parse the edit link from the response
-		return new xmldom( g.getResponse().getBody() );
-		//update ev;
-	}
-	*/
-		
-	/* delete an event from google, in order to update it
-	Calendar events are deleted by sending a DELETE request to the event's edit URL. 
-	This is the same URL used to  update the event.
-	
-	*/
-	public void deleteEvent( Event e) { 
-			
-	}
-	
-	public static testMethod void testEventCreate() {
-		gcal  g = new gcal(); 
-		string b  = g.createEventAtom( new System.Event(
-			subject = 'Tennis with Beth',
-			description = 'Meet for a quick lesson.',
-			ActivityDateTime = system.now(),
-			DurationInMinutes = 60
-			) );
-		system.debug (b);
-		g.makeRequestMethod('POST',g.defaultFeed+'/private/full', b);
-		
-		/* 
-		 * the response looks like this
-		 * if we want to store the resulting event into the force.com app, we can grab the event link 
-		 * and save it into the task/event
-		
-		20080412015717.876:Class.gCal.makeRequestMethod: line 348, column 17: BODY: 
-		<?xml version='1.0' encoding='UTF-8'?><entry xmlns='http://www.w3.org/2005/Atom' 
-		xmlns:batch='http://schemas.google.com/gdata/batch' xmlns:gCal='http://schemas.google.com/gCal/2005' 
-		xmlns:gd='http://schemas.google.com/g/2005'>
-		<id>http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg</id>
-		<published>2008-04-12T01:57:18.000Z</published><updated>2008-04-12T01:57:18.000Z</updated>
-		<category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/g/2005#event'/>
-		<title type='text'>Tennis with Beth</title><content type='text'>Meet for a quick lesson.</content>
-		<link rel='alternate' type='text/html' 
-			href='http://www.google.com/calendar/hosted/salesforce.com/event?eid=OGR0bGw5ZW1kZ2k5dDNxdWpuaHJxMXI1dmcgcmhlc3NAc2FsZXNmb3JjZS5jb20' 
-			title='alternate'/>
-		<link rel='self' type='application/atom+xml' 
-			href='http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg'/>
-		<link rel='edit' type='application/atom+xml' 
-			href='http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg/63343648638'/>
-		<author><name>Ron Hess</name>
-		<email>info@salesforce.com</email></author>
-		<gd:comments>
-		<gd:feedLink href='http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg/comments'/></gd:comments>
-		<gd:eventStatus value='http://schemas.google.com/g/2005#event.confirmed'/>
-		<gd:visibility value='http://schemas.google.com/g/2005#event.default'/>
-		<gd:transparency value='http://schemas.google.com/g/2005#event.opaque'/><gCal:uid value='8dtll9emdgi9t3qujnhrq1r5vg@google.com'/><gCal:sequence value='0'/>
-		<gd:when startTime='2008-04-11T18:57:17.000-07:00' endTime='2008-04-11T19:57:17.000-07:00'/>
-		<gd:who rel='http://schemas.google.com/g/2005#event.organizer' valueString='Ron Hess' email='rhess@salesforce.com'/>
-		<gd:where/>
-		</entry>
-		
-		*/
-	}
 	
 	/* 
 	 * support for GData auth-sub process
@@ -368,19 +256,6 @@ public class gCal {
 	 * begin the auth sub process to get a perm token, called if we 
 	 * have a token but no perm token
 	 */
-	public static testMethod void test4() { 
-		gcal  g = new gcal(); 
-		g.getAuthSubTokenInfo();
-	}
-	public static testMethod void test5() { 
-		gcal  g = new gcal(); 
-		g.SessionToken.AuthSubSessionToken__c = null;
-		//Test.setCurrentPageReference(new PageReference('gsession'));
-  		// Add parameters to page URL
-		System.currentPageReference().getParameters().put('token', 'yyyy');
-	
-		try { g.getAuthSubSessionToken(); } catch(exception e) {}
-	}
 	public string getAuthSubTokenInfo() { 
 		makeRequest(	'https://www.google.com/accounts/AuthSubTokenInfo' );
 		//		dom = new xmldom( getResponse().getBody() );
@@ -401,11 +276,11 @@ public class gCal {
 		
 		makeRequest('https://www.google.com/accounts/AuthSubSessionToken');
 
-		string response = getResponse().getBody(); 		system.debug( response ); 
+		string response = getResponse().getBody(); 	//	system.debug( response ); 
 		
 		updateSessionToken(response);		// parse and store to custom object
 	
-		system.debug( SessionToken);
+		//system.debug( SessionToken);
         return SessionToken.AuthSubSessionToken__c;
 	}
 	public PageReference AuthSubRevokeToken() {
@@ -414,7 +289,7 @@ public class gCal {
 	}
 	public PageReference AuthSubSessionToken() {
 		string s = getAuthSubSessionToken(); 
-		system.debug( s); 
+		//system.debug( s); 
 		PageReference pageRef = new PageReference('/'+SessionToken.id);
 		// go to SessionToken.id
 		pageRef.setRedirect(true);
@@ -475,7 +350,7 @@ public class gCal {
 	//    req.setCompressed(true); // causes a gack
 		
 		if (body != null) req.setBody(body);
-		system.debug(req);
+	//	system.debug(req);
 		try {
 			Http http = new Http();
 			res = http.send(req);
@@ -495,5 +370,123 @@ public class gCal {
 			System.debug('ERROR: '+ e);
 		}
 	}	
+
+/* nothing but test methods all the way down..
+*/
+	public static testMethod void test1() { 
+  		gcal  g = new gcal(); 
+  		Test.setCurrentPageReference(new PageReference('gsession'));
+  		// Add parameters to page URL
+		System.currentPageReference().getParameters().put('token', 'yyyy');
+		g.SessionToken.AuthSubSessionToken__c =null;
+  		system.debug( g.getAuthSubSessionToken() );
+  		calendars[] le =g.getowncalendars();
+  		for ( calendars e: le) { 
+	  		system.debug(e.getTitle());
+  		} 
+	}
+	public static testMethod void test2a() { 
+  		gcal  g = new gcal(); 
+  		g.getCalendarsList( g.tstString );
+  		calendars[] cle =g.getowncalendars();
+  		for ( calendars e: cle) { 
+	  		system.debug(e.getTitle());
+  		} 
+	}
+	public static testMethod void test2b() { 
+  		gcal  g = new gcal(); 
+  		system.event ee = new System.Event(
+			subject = 'Tennis with Beth',
+			description = 'Meet for a quick lesson.',
+			ActivityDateTime = system.now(),
+			DurationInMinutes = 60
+			) ;
+		xmldom.element x = g.createEventAtomElement( ee ) ;
+		x.dumpAll();
+		event mee = new gcal.event( x );	
+		mee.getTitle(); 
+		mee.getId(); 
+		mee.getStartTime();
+		g.AuthSubRevokeToken();
+	}	
+	public static testMethod void test3() { 
+  		string te = ' Token=CO3G_f-CGBDIlaye-P____8B\n';
+		gcal  g = new gcal();
+		g.updateSessionToken( te);
+		system.assert( g.getCalSession() == 'CO3G_f-CGBDIlaye-P____8B',' token not stored ');
+		g.updateSessionToken('');
+		system.debug( g.getCalSession() );
+	}
+	public static testMethod void testConstructor() { 
+		googSession__c gs = new googSession__c(); 
+		insert gs;
+		gcal  g = new gcal(gs.id);
+		system.debug(g);
+		system.assert(g.SessionToken != null);		
+		gcal  gg = new gcal('');
+		gg.init();
+		system.assert(gg.SessionToken != null);	
+		
+	}	
+	public static testMethod void test4() { 
+		gcal  g = new gcal(); 
+		g.getAuthSubTokenInfo();
+	}
+	public static testMethod void test5() { 
+		gcal  g = new gcal(); 
+		g.SessionToken.AuthSubSessionToken__c = null;
+		//Test.setCurrentPageReference(new PageReference('gsession'));
+  		// Add parameters to page URL
+		System.currentPageReference().getParameters().put('token', 'yyyy');
+	
+		try { g.getAuthSubSessionToken(); } catch(exception e) {}
+	}
+	public static testMethod void testEventCreate() {
+		gcal  g = new gcal(); 
+		string b  = g.createEventAtom( new System.Event(
+			subject = 'Tennis with Beth',
+			description = 'Meet for a quick lesson.',
+			ActivityDateTime = system.now(),
+			DurationInMinutes = 60
+			) );
+		system.debug (b);
+		g.makeRequestMethod('POST',g.defaultFeed+'/private/full', b);
+		
+		/* 
+		 * the response looks like this
+		 * if we want to store the resulting event into the force.com app, we can grab the event link 
+		 * and save it into the task/event
+		
+		20080412015717.876:Class.gCal.makeRequestMethod: line 348, column 17: BODY: 
+		<?xml version='1.0' encoding='UTF-8'?><entry xmlns='http://www.w3.org/2005/Atom' 
+		xmlns:batch='http://schemas.google.com/gdata/batch' xmlns:gCal='http://schemas.google.com/gCal/2005' 
+		xmlns:gd='http://schemas.google.com/g/2005'>
+		<id>http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg</id>
+		<published>2008-04-12T01:57:18.000Z</published><updated>2008-04-12T01:57:18.000Z</updated>
+		<category scheme='http://schemas.google.com/g/2005#kind' term='http://schemas.google.com/g/2005#event'/>
+		<title type='text'>Tennis with Beth</title><content type='text'>Meet for a quick lesson.</content>
+		<link rel='alternate' type='text/html' 
+			href='http://www.google.com/calendar/hosted/salesforce.com/event?eid=OGR0bGw5ZW1kZ2k5dDNxdWpuaHJxMXI1dmcgcmhlc3NAc2FsZXNmb3JjZS5jb20' 
+			title='alternate'/>
+		<link rel='self' type='application/atom+xml' 
+			href='http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg'/>
+		<link rel='edit' type='application/atom+xml' 
+			href='http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg/63343648638'/>
+		<author><name>Ron Hess</name>
+		<email>info@salesforce.com</email></author>
+		<gd:comments>
+		<gd:feedLink href='http://www.google.com/calendar/feeds/default/private/full/8dtll9emdgi9t3qujnhrq1r5vg/comments'/></gd:comments>
+		<gd:eventStatus value='http://schemas.google.com/g/2005#event.confirmed'/>
+		<gd:visibility value='http://schemas.google.com/g/2005#event.default'/>
+		<gd:transparency value='http://schemas.google.com/g/2005#event.opaque'/><gCal:uid value='8dtll9emdgi9t3qujnhrq1r5vg@google.com'/><gCal:sequence value='0'/>
+		<gd:when startTime='2008-04-11T18:57:17.000-07:00' endTime='2008-04-11T19:57:17.000-07:00'/>
+		<gd:who rel='http://schemas.google.com/g/2005#event.organizer' valueString='Ron Hess' email='rhess@salesforce.com'/>
+		<gd:where/>
+		</entry>
+		
+		*/
+	}
+
+
 	
 }
