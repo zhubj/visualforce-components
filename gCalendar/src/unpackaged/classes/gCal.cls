@@ -25,7 +25,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-TODO break AuthSub into a seperate class
+This class currently does not have proper code coverage -- TODO
 
 */ 
 public class gCal {
@@ -36,14 +36,14 @@ public class gCal {
 	googSession__c SessionToken; 
 	public gCal(string gsessionid) {
 		if (gsessionid != null && gsessionid != '') { 
-			this.SessionToken = [select id, AuthSubSessionToken__c from 
+			this.SessionToken = [select id, scope__c, AuthSubSessionToken__c from 
 					googSession__c where id = :gsessionid limit 1];
 		}
 		init(); 
 	}
 		
 	public gCal() { 
-		try { this.SessionToken = [select id, AuthSubSessionToken__c from 
+		try { this.SessionToken = [select id, scope__c, AuthSubSessionToken__c from 
 				googSession__c where ownerid = :UserInfo.getUserId() 
 				and scope__c like '%calendar%' limit 1 ];
 		} catch( exception e) {} 
@@ -55,7 +55,6 @@ public class gCal {
 			SessionToken = new googSession__c();
 			SessionToken.ownerId = 	UserInfo.getUserId();
 			SessionToken.name = 'Google Calendar for '+userInfo.getUserName();
-			SessionToken.scope__c = 'Calendar';
 			insert SessionToken;
 		}
 		system.assert(SessionToken!=null,' SessionToken is null, could not create token record');
@@ -128,6 +127,7 @@ public class gCal {
 	}
 	
 	private string defaultFeed = 'https://www.google.com/calendar/feeds/default';
+	public string getDefaultFeed() { return defaultFeed; }
 	
 	/* this belongs in the page controller */
 	public class calendars  { 
@@ -150,29 +150,73 @@ public class gCal {
   		gcal  g = new gcal(); 
   		list<event> le = g.getEvents();
   		for ( event e: le) { 
-	  		system.debug(e.getTitle());	
+	  		system.debug(e.getTitle());
+	  		e.getTitle(); 
+	  		e.getId(); 
+	  		e.getStartTime(); 
+	  			
   		}
+  		calendars[] cle =g.getowncalendars();
+  		for ( calendars e: cle) { 
+	  		system.debug(e.getTitle());
+  		} 
 	}
-
-	
+	public static testMethod void test2b() { 
+  		gcal  g = new gcal(); 
+  		system.event ee = new System.Event(
+			subject = 'Tennis with Beth',
+			description = 'Meet for a quick lesson.',
+			ActivityDateTime = system.now(),
+			DurationInMinutes = 60
+			) ;
+		xmldom.element x = g.createEventAtomElement( ee ) ;
+		x.dumpAll();
+		event mee = new gcal.event( x );	
+		mee.getTitle(); 
+		mee.getId(); 
+		mee.getStartTime();
+	}	
 	public class event  { 
 		xmldom.element e; 
 		event( xmldom.element dd) { e = dd; }
-		public string getTitle() { return e.getValue('title'); }	
-	} 
+		public string getTitle() { return e.getValue('title'); }
+		public string getId() { return e.getValue('id'); }	
+		public string getStartTime() { return e.getElementByTagName('gd:when').getAttribute('startTime'); }			
+	}
 	
 	public List<event> getEvents() { 
-		makeRequest(	defaultFeed+'/private/full' );
+		// past week ?
+		
+		// use a date range or hit the response size too large...
+		makeRequest(	defaultFeed+'/private/full?start-min=2008-01-16T00:00:00&start-max=2008-05-24T23:59:59' );
 		event [] ret = new event []{};
+
 		dom = new xmldom( getResponse().getBody() );
+		
 		for( xmldom.element e: dom.getElementsByTagName('entry') ) { 
-			system.debug( e.getValue('title') + ' ' + e.getElementByTagName('when').getAttribute('startTime') );	
 			e.dumpAll();
+			system.debug( e.getValue('title') );
+			system.debug( e.getValue('title') + ' ' + 
+				e.getElementByTagName('when').getAttribute('startTime') );	
 			ret.add( new event(e) );
 		}		
 		return ret; 
 	}
 
+
+	public List<event> getCalendars() { 
+		makeRequest(	defaultFeed+'/allcalendars/full');
+		event [] ret = new event []{};
+		dom = new xmldom( getResponse().getBody() );
+		for( xmldom.element e: dom.getElementsByTagName('entry') ) { 
+		//	e.dumpAll();
+		//	system.debug( e.getValue('title') );
+			//system.debug( e.getValue('title') + ' ' + e.getElementByTagName('when').getAttribute('startTime') );	
+			ret.add( new event(e) );
+		}		
+		return ret; 
+	}
+	
 	
 	
 	/*
@@ -199,8 +243,8 @@ public class gCal {
 	TODO create a routine for Task
 	*/
 	
-	public string createEventAtom(System.Event e) { 
-		//xmldom d = new xmldom();
+	public xmldom.element createEventAtomElement(System.Event e) { 
+			//xmldom d = new xmldom();
 		xmldom.element entry =new xmldom.element('entry'); 
 		entry.attributes.put('xmlns','http://www.w3.org/2005/Atom');
 		entry.attributes.put('xmlns:gd','http://schemas.google.com/g/2005');
@@ -219,9 +263,12 @@ public class gCal {
 		ewhen.attributes.put('startTime',dateTimeToGDataString(e.activityDateTime));
 		datetime endtime = e.activityDateTime.addMinutes(e.DurationInMinutes);
 		ewhen.attributes.put('endTime',dateTimeToGDataString(endtime));
-		entry.appendChild(ewhen);
+		entry.appendChild(ewhen); 
 		
-		return entry.toXmlString();  
+		return entry;
+	}
+	public string createEventAtom(System.Event e) { 
+		return createEventAtomElement(e).toXmlString();  
 	}
 	private xmldom.element createTextNode(string name,string value) { 
 		xmldom.element ret = new xmldom.element(name);
@@ -232,10 +279,43 @@ public class gCal {
 	private string dateTimeToGDataString(datetime t) { 
 		return string.valueofgmt(t).replace(' ','T') + '.000Z';
 	}
+	public static testMethod void testCalCreate1() {
+		testCalCreate(''); }
+	public static void testCalCreate(string id ) { 
+		gcal  g = new gcal(id);
+		string b  = g.createEventAtom( new System.Event(
+			subject = 'Tennis with Beth',
+			description = 'Meet for a quick lesson.',
+			ActivityDateTime = system.now(),
+			DurationInMinutes = 60
+			) );
+		system.debug (b);
+		g.makeRequestMethod('POST',g.getDefaultFeed()+'/private/full', b);
+	}
+	
+	/*
+	public static xmldom testCalCreateFromEvent(string id , system.Event ev) { 
+		gcal  g = new gcal(id);
+		string b  = g.createEventAtom( ev );
+		system.debug (b);
+		g.makeRequestMethod('POST',g.getDefaultFeed()+'/private/full', b);
+		// parse the edit link from the response
+		return new xmldom( g.getResponse().getBody() );
+		//update ev;
+	}
+	*/
+		
+	/* delete an event from google, in order to update it
+	Calendar events are deleted by sending a DELETE request to the event's edit URL. 
+	This is the same URL used to  update the event.
+	
+	*/
+	public void deleteEvent( Event e) { 
+			
+	}
 	
 	public static testMethod void testEventCreate() {
-		gcal  g = new gcal(); // TODO how to specify which calendar ?
-		
+		gcal  g = new gcal(); 
 		string b  = g.createEventAtom( new System.Event(
 			subject = 'Tennis with Beth',
 			description = 'Meet for a quick lesson.',
@@ -244,6 +324,7 @@ public class gCal {
 			) );
 		system.debug (b);
 		g.makeRequestMethod('POST',g.defaultFeed+'/private/full', b);
+		
 		/* 
 		 * the response looks like this
 		 * if we want to store the resulting event into the force.com app, we can grab the event link 
@@ -287,10 +368,23 @@ public class gCal {
 	 * begin the auth sub process to get a perm token, called if we 
 	 * have a token but no perm token
 	 */
+	public static testMethod void test4() { 
+		gcal  g = new gcal(); 
+		g.getAuthSubTokenInfo();
+	}
+	public static testMethod void test5() { 
+		gcal  g = new gcal(); 
+		g.SessionToken.AuthSubSessionToken__c = null;
+		//Test.setCurrentPageReference(new PageReference('gsession'));
+  		// Add parameters to page URL
+		System.currentPageReference().getParameters().put('token', 'yyyy');
+	
+		try { g.getAuthSubSessionToken(); } catch(exception e) {}
+	}
 	public string getAuthSubTokenInfo() { 
 		makeRequest(	'https://www.google.com/accounts/AuthSubTokenInfo' );
 		//		dom = new xmldom( getResponse().getBody() );
-		system.debug(getResponse().getBody());
+		//system.debug(getResponse().getBody());
 		return getResponse().getBody();
 	}
 	public string getAuthSubSessionToken() { 
@@ -314,8 +408,20 @@ public class gCal {
 		system.debug( SessionToken);
         return SessionToken.AuthSubSessionToken__c;
 	}
-
-
+	public PageReference AuthSubRevokeToken() {
+		integer r = doAuthSubRevokeToken();
+		return null; // stay on same page
+	}
+	public PageReference AuthSubSessionToken() {
+		string s = getAuthSubSessionToken(); 
+		system.debug( s); 
+		PageReference pageRef = new PageReference('/'+SessionToken.id);
+		// go to SessionToken.id
+		pageRef.setRedirect(true);
+		return pageRef; 
+		 
+	}	
+	
 	public integer doAuthSubRevokeToken () { 		
 		if ( this.SessionToken.AuthSubSessionToken__c == null ) 
 			return 403; 
@@ -332,7 +438,7 @@ public class gCal {
 		}
 		return Integer.valueof(res.getStatusCode());
 	}
-	
+	 
 	
 	/* 
 	 * construct all outgoing HTTP Rest requests here 
@@ -349,19 +455,31 @@ public class gCal {
 	    HttpRequest req = new HttpRequest();   
 
 	   	req.setEndpoint(url); 
-	   	if ( this.gsessionid!=null )  // gcal wants this
-	    	req.setEndpoint(url + '?gsessionid=' + this.gsessionid );
-	    
-	    req.setMethod(method); 
+	   	if ( this.gsessionid!=null ) {  // gcal wants this
+	    	if ( url.contains('?') ) {
+	    		req.setEndpoint(url + '&gsessionid=' + this.gsessionid );
+	    	} else {
+	    		req.setEndpoint(url + '?gsessionid=' + this.gsessionid );
+	    	}
+	   	}
+	   	if ( method.tolowerCase() =='delete' ) {
+	   		req.setMethod('POST');
+	   		req.setHeader('X-HTTP-Method-Override','DELETE');	
+	   	} else { 
+	    	req.setMethod(method);
+	   	} 
 	    req.setHeader('content-type', 'application/atom+xml' );
 	    req.setHeader('X-If-No-Redirect', '1' );
 	    req.setHeader('Authorization','AuthSub token=' + this.SessionToken.AuthSubSessionToken__c );
+		req.setHeader('Range','bytes=0-100000'); // does not appear to be effective?
+	//    req.setCompressed(true); // causes a gack
+		
 		if (body != null) req.setBody(body);
 		system.debug(req);
 		try {
 			Http http = new Http();
 			res = http.send(req);
-			
+			System.debug('STATUS:'+res.getStatus());
 			if ( res.getStatusCode() == 412 ) { // status if no gsession passed in
 				this.gsessionid = res.getHeader('X-Redirect-Location').split('=')[1];
 				//system.debug( this.gsessionid );
