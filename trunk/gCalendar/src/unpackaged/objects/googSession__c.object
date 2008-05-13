@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Holds a google session id for a user and app combo</description>
+    <fields>
+        <fullName>AuthSubSessionToken__c</fullName>
+        <label>AuthSubSessionToken</label>
+        <length>128</length>
+        <type>Text</type>
+    </fields>
+    <fields>
+        <fullName>Scope__c</fullName>
+        <label>Scope</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Calendar</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>null</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Sheet</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <type>Picklist</type>
+    </fields>
+    <label>googSession</label>
+    <nameField>
+        <label>Token Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>googSessions</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>
