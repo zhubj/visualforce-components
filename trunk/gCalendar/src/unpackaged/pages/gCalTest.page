@@ -1,0 +1,15 @@
+<apex:page controller="gCal" >
+<apex:pageBlock title="Google Calendar">
+<apex:pageBlockList value="{!Calendars}" var="e" >
+ <apex:column>{!e.title}</apex:column>
+ <apex:column>{!e.id}</apex:column>
+
+</apex:pageblockList>
+</apex:pageblock>
+<apex:pageBlock title="Google ">
+<apex:pageBlockList value="{!events}" var="e" >
+ <apex:column>{!e.title}</apex:column>
+<apex:column>{!e.starttime}</apex:column>
+</apex:pageblockList>
+</apex:pageblock>
+</apex:page>
