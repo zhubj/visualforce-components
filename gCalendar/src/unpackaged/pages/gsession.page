@@ -1,0 +1,55 @@
+<apex:page controller="gCal">
+<apex:form> 
+	<!--  
+	 if this is set, we don't need to get a new session unless
+	 we are changing calendars  -->
+	<apex:outputPanel rendered="{!CalSession == null}"> 
+
+		<apex:outputPanel rendered="{!$CurrentPageReference.parameters.token == null}">
+			<!--  no session, need to redirect to get one -->
+<script>
+window.location.href = "https://www.google.com/accounts/AuthSubRequest?next=" + escape( window.location.href ) + "&scope=https%3A%2F%2Fwww.google.com%2Fcalendar%2Ffeeds%2F&session=1&secure=0";
+</script>
+		</apex:outputPanel>
+
+		<apex:outputPanel rendered="{!$CurrentPageReference.parameters.token != null}">
+			<h1>Good news!</h1> <p>
+			You have been granted a one time use token</p><p>
+			<!--  this is set after we grant the single use token -->
+			{!$CurrentPageReference.parameters.token}</p>
+			<br />
+			<!-- fetch a semi-perm token, store it in the user record, reload this page -->
+			<!-- TODO test  -->
+			<apex:commandButton value="Request Perm Session Token" 
+				rerender="sess" 
+  				action="{!AuthSubSessionToken}"/>
+  
+		</apex:outputPanel>
+	</apex:outputPanel>
+
+	<!--  if it's not null, we have a valid session -->
+	<apex:outputPanel rendered="{!CalSession != null}">
+		<h1>Congratulations</h1><br />
+  		You have a Semi-Permanent Google session id : 
+  		<apex:outputPanel id="sess" >{!CalSession}</apex:outputPanel>
+  		<p />
+  		<apex:commandButton value="Revoke Session Id" rerender="sess" 
+  			action="{!AuthSubRevokeToken}"/>
+  		 
+		<!--  see if it's a valid by calling AuthSubTokenInfo? -->
+		<!--    url : 'https://www.google.com/accounts/AuthSubTokenInfo',
+		 	<
+		 -->
+		 <apex:commandButton value="Test Session Id" rerender="sess" 
+  			action=""/>
+		 <p>
+ 
+    	Owner's Google Calendar List:
+    	<ul><apex:repeat value="{!owncalendars}" var="ca" >
+			<li>{!ca.title}</li>
+		</apex:repeat></ul>	
+   </p>
+	</apex:outputPanel>
+ </apex:form>	
+    	
+</apex:page>
