@@ -1,0 +1,30 @@
+<apex:page standardController="googSession__c" extensions="gCalCon">
+	<apex:form>
+		<apex:outputpanel id="det">
+			<apex:detail subject="{!$CurrentPageReference.parameters.Id}" />
+			<!--  todo write out our own page block
+			this does not get re-calculated at re-render time
+			 -->
+		</apex:outputpanel>
+		<apex:messages />
+
+		<apex:pageBlock title="Session Admin">
+			<apex:commandButton action="{!AuthSubRevokeToken}"
+				value=" Revoke Session Token " rerender="det" />
+			This will remove and de-authorize a valid AuthSub token
+			<p />
+			
+			<apex:commandButton value="Test Session Token" rerender="sess"
+				action="{!AuthSubTokenInfo}" /> 
+			<apex:outputPanel id="sess">{!TokenInfo}</apex:outputPanel>
+			
+			<p />
+			<apex:outputPanel rendered="{!CalSession == null}">
+			<apex:commandButton action="{!GoToGsession}"
+					value="Request Session Token" />
+			This will redirect to Google to retrieve a new token
+			</apex:outputPanel>
+		
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>
