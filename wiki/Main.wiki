@@ -1,6 +1,7 @@
-#summary One-sentence summary of this page.
+
 
 = Introduction =
 All the action is over on [http://developer.force.com developer.force.com]
+Talk to us here on the dev boards [http://community.salesforce.com/sforce/board?board.id=Visualforce Visualforce Board]
 
 thanks!
