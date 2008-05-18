@@ -1,55 +1,70 @@
-<apex:page controller="gCal">
-<apex:form> 
-	<!--  
-	 if this is set, we don't need to get a new session unless
-	 we are changing calendars  -->
-	<apex:outputPanel rendered="{!CalSession == null}"> 
+<apex:page standardController="googSession__c" extensions="gAuthSub" >
+<apex:form > 
+    <!--  
+     if we are missing a token, ask for one -->
+    <apex:outputPanel rendered="{!googSession__c.AuthSubSessionToken__c == null}"> 
 
-		<apex:outputPanel rendered="{!$CurrentPageReference.parameters.token == null}">
-			<!--  no session, need to redirect to get one -->
-<script>
-window.location.href = "https://www.google.com/accounts/AuthSubRequest?next=" + escape( window.location.href ) + "&scope=https%3A%2F%2Fwww.google.com%2Fcalendar%2Ffeeds%2F&session=1&secure=0";
-</script>
-		</apex:outputPanel>
-
-		<apex:outputPanel rendered="{!$CurrentPageReference.parameters.token != null}">
-			<h1>Good news!</h1> <p>
-			You have been granted a one time use token</p><p>
-			<!--  this is set after we grant the single use token -->
-			{!$CurrentPageReference.parameters.token}</p>
-			<br />
-			<!-- fetch a semi-perm token, store it in the user record, reload this page -->
-			<!-- TODO test  -->
-			<apex:commandButton value="Request Perm Session Token" 
-				rerender="sess" 
-  				action="{!AuthSubSessionToken}"/>
-  
-		</apex:outputPanel>
-	</apex:outputPanel>
-
-	<!--  if it's not null, we have a valid session -->
-	<apex:outputPanel rendered="{!CalSession != null}">
-		<h1>Congratulations</h1><br />
-  		You have a Semi-Permanent Google session id : 
-  		<apex:outputPanel id="sess" >{!CalSession}</apex:outputPanel>
-  		<p />
-  		<apex:commandButton value="Revoke Session Id" rerender="sess" 
-  			action="{!AuthSubRevokeToken}"/>
-  		 
-		<!--  see if it's a valid by calling AuthSubTokenInfo? -->
-		<!--    url : 'https://www.google.com/accounts/AuthSubTokenInfo',
-		 	<
-		 -->
-		 <apex:commandButton value="Test Session Id" rerender="sess" 
-  			action=""/>
-		 <p>
+        <apex:outputPanel rendered="{!$CurrentPage.parameters.token == null}">
+            <!--  no single use token , need to redirect to get one 
+            
+            We have registered the production instances (including tapp0, na1, na2) to do a secure auth sub with 
+            Google API with private key authentication. As part of that process we registered a valid "next" URL, 
+            and you'll need to use that same url. That url points to a generic servlet on our hand which can redirect
+             to whatever page you need, and will pass in the one time token from Google as a 
+             parameter (parameter name is "token").
+            So the URL you need to use as the "next" parameter is 
+            the URL you want to be redirected to.
+            http://tapp0.salesforce.com/_ui/core/google/GoogleAuthSubCallback?
+                url= escape_this( /apex/your_page_here )  
+            
+            NOTE: you must escape the page url, and then escape the entire next url again.
  
-    	Owner's Google Calendar List:
-    	<ul><apex:repeat value="{!owncalendars}" var="ca" >
-			<li>{!ca.title}</li>
-		</apex:repeat></ul>	
-   </p>
-	</apex:outputPanel>
- </apex:form>	
-    	
+The GoogleAuthSubCallback servlet will redirect to the URL you passed into it, and it will add the token parameter to it.
+
+scope is one of 
+http://spreadsheets.google.com/feeds/
+http://www.google.com/calendar/feeds/
+            -->
+            
+<script> 
+    var next = window.location.protocol + '//' + window.location.host + 
+        '/_ui/core/google/GoogleAuthSubCallback?url=' 
+         + encodeURIComponent( window.location.pathname + "?id={!googSession__c.id}" ) ;
+    
+    var w  = "https://www.google.com/accounts/AuthSubRequest?next=" + 
+        encodeURIComponent( next ) + 
+        "&scope={!googSession__c.Scope__c}&session=1&secure=0";
+
+    window.location.href =w;
+</script>
+<!-- 
+<apex:commandButton action="{!GoogleAuthSubCallback}" value="get Auth Sub" />-->
+        </apex:outputPanel>
+ 
+
+        <apex:outputPanel rendered="{!$CurrentPage.parameters.token != null}">
+            <h1>Good news!</h1> <p>
+            You have been granted a one time use token</p><p>
+            <!--  this is set after we grant the single use token -->
+            {!$CurrentPage.parameters.token}</p>
+            <br />
+            <!-- fetch a semi-perm token, store it in the user record, reload this page -->
+            <apex:commandButton value="Request Perm Session Token" 
+                rerender="sess" 
+                action="{!AuthSubSessionToken}"/>
+  
+            </apex:outputPanel>
+    </apex:outputPanel> <!-- session token is null -->
+
+
+    <!--  if it's not null, we have a valid session -->
+    <apex:outputPanel rendered="{!googSession__c.AuthSubSessionToken__c != null}">
+        <h1>Congratulations</h1><br />
+        You have a Semi-Permanent Google session id  
+        <apex:outputPanel id="sess" ><p /><b>
+        <a href="/{!googSession__c.id}" >{!googSession__c.AuthSubSessionToken__c}</a></b></apex:outputPanel>
+        <p />
+    </apex:outputPanel>
+ 
+</apex:form>            
 </apex:page>
