@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexComponent xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>A component that plots bubble objects onto a plot area. Similar to a scatterplot or magic quadrant graphical data presentation tool this component utilizes a special Apex class to manage individual bubbles.</description>
+    <label>bubblePlot</label>
+</ApexComponent>
