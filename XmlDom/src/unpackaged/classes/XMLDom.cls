@@ -25,12 +25,13 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-/* 
+/*  
 	This class implements a small portion of the wc3 xml dom model.  
 	Generally useful for simple XML return objects. Note: stores namespaces 
 	in the attributes map for now. No node typing done at this time  
 	
 	can parse into DOM trees the XML return objects from Google, Amazon and others.
+	large parse trees will consume suprising amounts of memory
  */
 public class XMLDom {
 	// Constructor 
@@ -40,7 +41,7 @@ public class XMLDom {
 		XmlStreamReader reader = new XmlStreamReader(str);
 		reader.setCoalescing(true);
 		parseXmlReader (root , reader);	
-	}
+	} 
 	 
 	// debugging assistance
 	public void dumpAll() { root.dumpAll(); } 
@@ -48,7 +49,7 @@ public class XMLDom {
 	
 	// given a parent node and a stream reader, populates the tree below here (recursive)
 	void parseXmlReader( Element parent, XmlStreamReader reader ) {
-
+		try {
 		while(reader.hasNext()) {
 		
 			if (reader.getEventType() == XmlTag.START_ELEMENT) {
@@ -86,13 +87,23 @@ public class XMLDom {
 				reader.next(); 
 			} 	
 		}
+		} catch(Exception e) { // ParseError if we get a truncated response, allow it
+			system.debug(e);
+		}
 	}	
 	
 	// access nodes in the tree using these getters
 	public List<Element> getElementsByTagName(string nam) {
 		return root.getElementsByTagName(nam); 
 	}
-
+	public List<Element> getElementsByPath(string path) {	
+		return root.getElementsByPath( path);
+	}
+	public Element getElementByPath(string path) {	
+		List<Element> r = root.getElementsByPath( path);
+		if (r.size() == 0) return null; 
+		return r[0];
+	}
 	public Element 		 getElementByTagName(string nam) {
 		List<Element> r = root.getElementsByTagName(nam);
 		if (r.size() == 0) return null; 
@@ -105,7 +116,8 @@ public class XMLDom {
 	// everything in the dom is found as childNodes under this root element
 	public Element root = new Element('#document');
 	public integer debug =0;
-
+		// dump out the element tree
+	public String toXmlString() { return root.toXmlString(); }
 	
 /* 
  *  Element  class definition
@@ -208,7 +220,33 @@ public class XMLDom {
 			c.dumpAll(pre+'   '); 
 		}
 	}
-
+	public string toXmlString() {
+		string ret = '<' + this.nodeName + ' ';
+		for (  string a : attributes.keySet() ) {
+			ret += a + '=\'' + attributes.get(a) + '\' ' ;
+		}
+		
+		if ( nodeValue == '' && childNodes.size() == 0 ) { 
+			return ret + ' />\n'; 	
+		}
+		
+		ret += '>';
+		if (nodeValue == '' ) 
+			ret += '\n';
+		
+		integer hasChilds = 0;
+		string tmpRet = '';
+		for (Element c: this.childNodes) {  
+			tmpRet += c.toXmlString() ;
+			hasChilds++; 
+		}	
+		if (hasChilds > 0 ) ret += tmpRet;
+		
+		if (nodeValue != '' ) 
+			ret += nodeValue;
+			
+		return ret + '</' + this.nodeName + '>\n'; 
+	}
 	/* 
 	 * experimental path based patern matching, sort of like xpath, 
 	 * but simpler, just matches a path() string with the pattern supplied
@@ -218,7 +256,7 @@ public class XMLDom {
 	 // /.*/book$
 	public List<Element> getElementsByPath(string path) {	
 		List<Element> ret = new List<Element>{};
-		// system.debug( path + ' ' + this.path());
+	//	 system.debug( path + ' ' + this.path());
 		if ( Pattern.matches(path, this.path()) ) ret.add(this);
 		for (Element c: this.childNodes) ret.addAll( c.getElementsByPath(path) );
 		return ret;
